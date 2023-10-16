@@ -96,7 +96,3 @@ dummyd validate-genesis
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
 dummyd start --pruning=nothing --log_level $LOGLEVEL
-
-sleep 10
-
-dummyd query staking params
