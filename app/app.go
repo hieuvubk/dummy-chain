@@ -100,10 +100,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-
-	"github.com/osmosis-labs/tokenfactory"
-	tokenfactorykeeper "github.com/osmosis-labs/tokenfactory/keeper"
-	tokenfactorytypes "github.com/osmosis-labs/tokenfactory/types"
 )
 
 var (
@@ -195,7 +191,6 @@ var (
 		authzmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 		wasm.AppModuleBasic{},
-		tokenfactory.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -209,7 +204,6 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 		wasm.ModuleName:              {authtypes.Burner},
-		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -261,7 +255,6 @@ type App struct {
 	EvidenceKeeper     evidencekeeper.Keeper
 	TransferKeeper     ibctransferkeeper.Keeper
 	FeeGrantKeeper     feegrantkeeper.Keeper
-	TokenfactoryKeeper tokenfactorykeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -305,7 +298,6 @@ func New(
 		// this line is used by starport scaffolding # stargate/app/storeKey
 		wasm.StoreKey,
 		authzkeeper.StoreKey,
-		tokenfactorytypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -371,12 +363,6 @@ func New(
 	app.StakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
-
-	tokenfactoryKeeper := tokenfactorykeeper.NewKeeper(
-		keys[tokenfactorytypes.StoreKey], app.GetSubspace(tokenfactorytypes.ModuleName), app.AccountKeeper,
-		app.BankKeeper, app.DistrKeeper)
-	
-	app.TokenfactoryKeeper = tokenfactoryKeeper
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -495,7 +481,6 @@ func New(
 		// this line is used by starport scaffolding # stargate/app/appModule
 		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.StakingKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		tokenfactory.NewAppModule(app.TokenfactoryKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -522,7 +507,6 @@ func New(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
-		tokenfactorytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -545,7 +529,6 @@ func New(
 		authz.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
-		tokenfactorytypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -574,7 +557,6 @@ func New(
 		ibctransfertypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 		wasm.ModuleName,
-		tokenfactorytypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -784,7 +766,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 	paramsKeeper.Subspace(wasm.ModuleName)
-	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 
 	return paramsKeeper
 }
